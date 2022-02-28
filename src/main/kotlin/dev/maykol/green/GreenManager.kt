@@ -33,7 +33,7 @@ class GreenManager(
                                     val json = gson.fromJson(args[1], greenData.clazz)
 
                                     if (json != null) {
-                                        greenData.method.invoke(greenData.instance, json);
+                                        greenData.method.invoke(greenData.instance, json)
                                     }
                                 }
                             }
