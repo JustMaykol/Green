@@ -5,5 +5,4 @@ package dev.maykol.green
  * Saturday, February 12, 2022
  */
 
-interface GreenListener {
-}
+interface GreenListener
