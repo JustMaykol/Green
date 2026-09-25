@@ -26,17 +26,7 @@ class GreenManager(
                 it.subscribe(object : JedisPubSub() {
                     override fun onMessage(channel: String, message: String) {
                         if (channel.equals(id, true)) {
-                            val args = message.split("~")
-
-                            for (greenData in storage) {
-                                if (greenData.id.equals(args[0], true)) {
-                                    val json = gson.fromJson(args[1], greenData.clazz)
-
-                                    if (json != null) {
-                                        greenData.method.invoke(greenData.instance, json)
-                                    }
-                                }
-                            }
+                            handleMessage(message)
                         }
                     }
                 }, id)
@@ -44,7 +34,30 @@ class GreenManager(
         }
     }
 
+    internal fun handleMessage(message: String) {
+        // Solo el primer '~' separa el id del JSON: el contenido puede incluir '~'
+        val args = message.split("~", limit = 2)
+
+        if (args.size != 2) return
+
+        for (greenData in storage) {
+            if (greenData.id.equals(args[0], true)) {
+                val json = gson.fromJson(args[1], greenData.clazz)
+
+                if (json != null) {
+                    greenData.method.invoke(greenData.instance, json)
+                }
+            }
+        }
+    }
+
+    private fun checkId(packetId: String) {
+        require(!packetId.contains('~')) { "Packet id cannot contain '~': $packetId" }
+    }
+
     fun sendPacket(channel: String, any: Any) {
+        checkId(channel)
+
         try {
             val jsonObject: String = gson.toJson(any) ?: throw IllegalStateException("JsonObject throw null.")
 
@@ -57,6 +70,8 @@ class GreenManager(
     }
 
     fun sendPacket(channel: String, jsonObject: JsonObject) {
+        checkId(channel)
+
         try {
             redisPool.resource.use {
                 it.publish(id, "$channel~$jsonObject")
@@ -72,6 +87,8 @@ class GreenManager(
 
             if (annotation != null) {
                 val packetId = annotation.id
+                checkId(packetId)
+
                 var packetClass: Class<*>? = null
 
                 if (method.parameters.size == 1) {

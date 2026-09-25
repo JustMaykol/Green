@@ -26,7 +26,7 @@ green.sendPacket("chat", ChatPacket("Maykol", "Hola"))
 ## Cómo funciona
 
 - `GreenManager` se suscribe al canal de Redis `Green` en un hilo aparte (`ForkJoinPool`).
-- `sendPacket(id, objeto)` publica el mensaje con el formato `id~json`.
+- `sendPacket(id, objeto)` publica el mensaje con el formato `id~json`; al recibirlo, solo el primer `~` separa el `id` del JSON.
 - `addListener()` registra por reflexión los métodos con `@GreenHandler(id)` que reciben un solo parámetro. Al llegar un mensaje con ese `id`, el JSON se convierte al tipo de ese parámetro y se invoca el método.
 
 ## Compilar
@@ -42,7 +42,7 @@ mvn package
 - Kotlin 1.5.31 · Java 8
 - Jedis 3.5.1 (Redis) · Gson 2.8.9
 
-## Limitaciones
+## Notas
 
-- El separador `~` no se escapa: si el `id` o el contenido del mensaje (por ejemplo, un texto dentro del JSON) contiene `~`, el mensaje se corta y no se entrega.
+- El `id` de un paquete no puede contener `~` (se usa como separador); `addListener` y `sendPacket` lo rechazan. El contenido del mensaje sí puede incluirlo.
 - Todos los mensajes viajan por un único canal de Redis y se filtran por `id` en cada servidor.
