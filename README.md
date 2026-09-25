@@ -1,10 +1,10 @@
 # Green
 
-Librería en **Kotlin** para enviar y recibir mensajes entre servidores mediante **Redis Pub/Sub**. Los mensajes son objetos que se serializan a JSON con Gson y se entregan a los métodos marcados con `@GreenHandler`.
+A **Kotlin** library for sending and receiving messages between servers over **Redis Pub/Sub**. Messages are objects serialized to JSON with Gson and delivered to methods annotated with `@GreenHandler`.
 
-Pensada para comunicar varios servidores de Minecraft (por ejemplo, un proxy y sus servidores), aunque no depende de ninguna API de Minecraft.
+It was designed for communication between Minecraft servers (for example, a proxy and its backend servers), but it doesn't depend on any Minecraft API.
 
-## Uso
+## Usage
 
 ```kotlin
 data class ChatPacket(val player: String, val message: String)
@@ -20,18 +20,18 @@ class ChatListener : GreenListener {
 val green = GreenManager(Gson(), JedisPool("localhost", 6379))
 
 green.addListener(ChatListener())
-green.sendPacket("chat", ChatPacket("Maykol", "Hola"))
+green.sendPacket("chat", ChatPacket("Maykol", "Hello"))
 ```
 
-## Cómo funciona
+## How it works
 
-- `GreenManager` se suscribe al canal de Redis `Green` en un hilo aparte (`ForkJoinPool`).
-- `sendPacket(id, objeto)` publica el mensaje con el formato `id~json`; al recibirlo, solo el primer `~` separa el `id` del JSON.
-- `addListener()` registra por reflexión los métodos con `@GreenHandler(id)` que reciben un solo parámetro. Al llegar un mensaje con ese `id`, el JSON se convierte al tipo de ese parámetro y se invoca el método.
+- `GreenManager` subscribes to the `Green` Redis channel on a separate thread (`ForkJoinPool`).
+- `sendPacket(id, object)` publishes the message as `id~json`; on receipt, only the first `~` separates the `id` from the JSON.
+- `addListener()` uses reflection to register methods annotated with `@GreenHandler(id)` that take a single parameter. When a message with that `id` arrives, the JSON is converted to the parameter's type and the method is invoked.
 
-## Compilar
+## Building
 
-Requiere Java 8 y Maven.
+Requires Java 8 and Maven.
 
 ```bash
 mvn package
@@ -42,7 +42,7 @@ mvn package
 - Kotlin 1.5.31 · Java 8
 - Jedis 3.5.1 (Redis) · Gson 2.8.9
 
-## Notas
+## Notes
 
-- El `id` de un paquete no puede contener `~` (se usa como separador); `addListener` y `sendPacket` lo rechazan. El contenido del mensaje sí puede incluirlo.
-- Todos los mensajes viajan por un único canal de Redis y se filtran por `id` en cada servidor.
+- A packet `id` cannot contain `~` (it's used as the separator); `addListener` and `sendPacket` reject it. The message content can include it.
+- All messages travel over a single Redis channel and are filtered by `id` on each server.
